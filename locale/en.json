@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Provider Router",
+    "description": "Gives the main model running a conversation an agent tool router_call that fans out tasks in parallel to third-party models of your other attached providers (P→C1, P→C2, P→C1+C3…), with a Settings checklist to control which models are callable and per-model remaining-token quotas. No virtual route, no selector clutter; never calls itself."
+  }
+}

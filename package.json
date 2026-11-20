@@ -1,0 +1,52 @@
+{
+  "name": "dsh-provider-router",
+  "version": "0.4.2",
+  "description": "DeepSeek Harness plugin: gives the main model running a conversation an agent tool router_call that fans out tasks in parallel to third-party models of your other attached providers (P→C1, P→C2, P→C1+C3…), with a Settings checklist to control which models are callable and per-model remaining-token quotas. No virtual route, no selector clutter; never calls itself.",
+  "private": true,
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json"
+  },
+  "files": [
+    "index.js",
+    "client.js",
+    "cordis.patch.yml",
+    "vendor",
+    "locale",
+    "README.md",
+    "README.en.md",
+    "LICENSE"
+  ],
+  "icon": "./icon.svg",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-settings"
+      ]
+    },
+    "compatibility": {
+      "dsh": ">=0.2.0-rc.1"
+    }
+  },
+  "keywords": [
+    "deepseek-harness",
+    "dsh-plugin",
+    "provider-routing",
+    "model-selection",
+    "llm-adapter",
+    "third-party-model",
+    "verification"
+  ]
+}

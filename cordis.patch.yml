@@ -1,0 +1,22 @@
+# dsh-provider-router bundle patch: one insert over the profile tree.
+# The plugin row activates only when this package is installed as a profile
+# dependency (e.g. `dsh plugin add dsh-provider-router`).
+#
+# 这个插件不再注册虚拟路由、也不在选择器里出现：它的全部作用是给正在跑
+# 本对话的主模型一个调用工具 router_call，把任务并行发给「设置 → Provider
+# Router」里已勾选的第三方模型（P→C1、P→C2、P→C1+C3…），以及一条
+# 可勾选、可维护剩余 token 配额的清单。
+#
+# routes 是运行时清单（与设置面板同源、可互相改写）：
+# - 精确条目：一个模型一行，enabled 控制可调用状态，quota 为剩余 token
+#   （负数=无限，手动维护；主模型会按它决定拆分子任务大小）。
+# - model: "*" 为整组批量开关。
+- insert:
+    - id: provider-router
+      name: 'dsh-provider-router'
+      config:
+        routes: []
+        # - source: qiniuyun                    # 已挂载 provider 的路由 id
+        #   model: moonshotai/kimi-k3           # 该 provider 下的精确模型 id（"*" = 整组）
+        #   enabled: true                       # false 即不出现在任何调用
+        #   quota: -1                            # 剩余可用 token；-1 = 无限

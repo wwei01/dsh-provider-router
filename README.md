@@ -1,2 +1,52 @@
 # dsh-provider-router
-DSH plugin: router_call - let a conversation's main model borrow third-party models of your other attached providers for independent verification, with per-model token quotas.
+
+DeepSeek Harness 插件：**一个调用工具 + 一份可勾选清单**，让本对话的主模型随时、多次借用你其他已挂载 provider 名下的第三方模型做独立核验，绝不打断主通道。
+
+## 它解决什么
+
+DSH 本身没有「provider A 调用挂在 provider B 的第三方模型」这类设置；会话虽可整场切换模型，但不会旁路借用。这个插件不注册虚拟路由、不在选择器里出现任何额外条目——它只做三件事：
+
+1. **自动获取你当前可用模型的清单**：挂在各 provider 名下的第三方模型全部列出。
+2. **勾选控制可调用状态**：设置页面里每个模型一个独立勾选框，独立设置每一个模型是否可被进一步调用。
+3. **主模型随时多次调用**：`router_call` 工具。P→C1、P→P→C2、P→C1+C3…依次发生，每次由主模型决定把任务相关的哪些信息传进去（`task` + 可选 `materials`，子模型看不到其余对话历史）。调用类似一次映射：传入信息 → 模型处理 → 得到返回包，父模型拿到单次调用的结果，之后自己汇总。
+4. **剩余 token 配额**：每个模型一个手动维护的配额输入框（负数＝无限，可一键全部重置为负数，也可逐个修改保存）。主模型拆分子任务时据此判断合适的大小（不是每个模型都无限或已预付）。
+
+防自呼是硬规则：本对话正在使用的模型永远从可调用集合里排除。
+
+## 使用方法
+
+1. 插件装好后出现在 **Settings → Provider Router** 分区（自动读取全部已挂载 provider 的模型列表）。
+2. 逐个勾选允许调用的模型（开关样式，点击即切换、实时刷新——不依赖原生复选框的滞后状态）。**组开关按“或”判定**：任一名下模型被勾选，该 provider 即为开；全部取消才为关。点组开关＝整组动作：开则全部一次全开，关则清空该 provider 的全部条目（含单独勾选的）。
+   **可见性边界（v0.4.0 修复）**：通配展开只经过「可见目录」（`ctx.llm.listModels` 服务方法），其他插件的可见性策略（例如 dsh-model-tidy 隐藏的模型）被尊重——隐藏模型永远不会因通配而变得可调用，只有显式写进清单或在面板里勾选到的条目才会被调用。此前版本直读裸适配器目录，会把包括隐藏模型在内的全部条目纳入可调用集，已封堵。
+3. 每行右侧是 token **数字输入框**，直接显示原始存储值（值变化时整框重建，显示必然同步）：默认 -1（负数＝无限，映射只在后台）；失焦或回车保存，填正数后每次调用实时扣减，超额的目标直接跳过并在返回里注明。工具栏有「全部配额重置为无限（-1）」一键重置（两步确认：本 webview 禁用原生弹窗，按钮变红后再次点击才执行）。
+   「清空全部勾选」同为两步确认。
+4. 接入新上游 API：先在「设置 → 模型」添加该 provider，面板随后即可勾选（面板不存密钥）。
+5. YAML 形态的同一条清单位于 `$DSH_HOME/profiles/desktop/cordis.patch.yml`（与设置页同源，互相改写、热生效）：
+
+```yaml
+- id: provider-router
+  name: 'dsh-provider-router'
+  config:
+    routes:
+      - source: qiniuyun                    # 已挂载 provider 的路由 id
+        model: moonshotai/kimi-k3           # 精确模型 id；"*" = 整组（仅展开可见目录，尊重其他插件的可见性策略）
+        enabled: true
+        quota: -1                            # 剩余 token；-1 = 无限
+```
+
+## 主模型怎么用它
+
+会话里的模型直接调工具：给自包含的 `task`、可选 `materials`（证据数组）、可选 `targets`（虚拟 id 如 `qiniuyun::moonshotai/kimi-k3`，省略＝全部已勾选且非自身）。每次返回一个目标一条裁决：状态＋原文＋本次 token 消耗＋剩余配额。主模型据此决定下一个子任务大小和用哪些目标。
+
+## 语义与限制（如实说明）
+
+- 被调用模型只看到 `task`/`materials`，看不到本对话其余历史 → 独立但需要你把关键上下文写进 materials。
+- 回放状态不跨适配器：调用以纯文本请求发出，原生缓存/思考连续性退化，内容无损。
+- 配额是手动账本：进程内扣减、重启归位（配置里的 quota 值持久保留）；扣减口径＝该次请求 input+output tokens 近似。
+- 每次按目标数 fan-out 计费；每个目标带独立的 120 秒倒计时，挂起的端点只判自己失败，不拖垮整批。
+- schemastery 与 cosmokit 以 MIT 许可 vendored 于 `vendor/`，因为本 bundle 位于 profile 目录外，无法解析 profile 的 node_modules。
+- 选择器里不出现任何额外条目——不占地方，即卸即净。
+
+## 卸载
+
+移除 bundle 后工具注销，旧会话不受影响。

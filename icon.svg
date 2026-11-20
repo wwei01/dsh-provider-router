@@ -1,0 +1,9 @@
+<svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- local session chip -->
+  <rect x="3" y="11" width="10" height="14" rx="3" fill="#3A66D6"/>
+  <!-- routing arrow -->
+  <path d="M14.5 18H17" stroke="#64748B" stroke-width="2" stroke-linecap="round"/>
+  <path d="M17 14.4L22.5 18L17 21.6" stroke="#64748B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- remote third-party provider chip -->
+  <rect x="23" y="11" width="10" height="14" rx="3" stroke="#3A66D6" stroke-width="2"/>
+</svg>
